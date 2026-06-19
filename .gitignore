@@ -1,0 +1,3 @@
+__pycache__/
+*.pyc
+# user art is yours to commit or not; runtime state lives in ~/.config/claude-pet
