@@ -1,5 +1,11 @@
 # Claude Code Pet 🪙
 
+> **Now rewritten in Rust** as `cc-pet` (a Cargo workspace under `crates/`), adding
+> multi-screen support, a configurable terminal, daily/weekly usage quotas (live for
+> Claude, local for Codex), and Codex session tracking. Run it with
+> `cargo run -p petgui --bin cc-pet`. See `reference docs/RUST_ARCHITECTURE.md`.
+> The original Python app (`pet.py` / `sessions.py`) is kept below as reference.
+
 An ambient desktop **pet** for Linux that tracks your Claude Code sessions. A small
 always-on-top creature sits on your desktop; **click it** to pop open a panel:
 

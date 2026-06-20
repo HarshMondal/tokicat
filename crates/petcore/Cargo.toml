@@ -1,0 +1,22 @@
+[package]
+name = "petcore"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Data layer for the desktop pet: Claude + Codex session parsing, quotas, terminal control."
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+chrono.workspace = true
+glob.workspace = true
+directories.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+ureq.workspace = true
+
+[[bin]]
+name = "dump"
+path = "src/bin/dump.rs"

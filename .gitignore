@@ -5,3 +5,6 @@ __pycache__/
 # odin tooling runtime artifacts
 .odin/logs/
 .odin/costs/
+
+# rust build artifacts
+/target
