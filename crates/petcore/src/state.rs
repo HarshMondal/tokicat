@@ -15,6 +15,9 @@ pub struct State {
     pub last_session: Option<String>,
     pub pinned: Vec<String>,
     pub last_pet_time: Option<f64>,
+    /// Persisted panel window size (custom resize grip). None = use defaults.
+    pub panel_w: Option<f32>,
+    pub panel_h: Option<f32>,
 }
 
 fn config_dir() -> PathBuf {

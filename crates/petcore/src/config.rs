@@ -14,6 +14,65 @@ pub struct Config {
     pub quota: QuotaConfig,
     pub pet: PetConfig,
     pub providers: ProvidersConfig,
+    pub ui: UiConfig,
+    pub sessions: SessionsConfig,
+    pub notify: NotifyConfig,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SessionsConfig {
+    /// Command to start a brand-new session, per provider. Defaults grant full access
+    /// (skip approval/permission prompts). `{cwd}` is the working dir (the terminal
+    /// already spawns in cwd, so it's usually unneeded).
+    pub new_claude: String,
+    pub new_codex: String,
+    pub new_opencode: String,
+    /// Command to resume an existing session. `{id}` is replaced with the session id.
+    pub resume_claude: String,
+    pub resume_codex: String,
+    pub resume_opencode: String,
+}
+
+impl Default for SessionsConfig {
+    fn default() -> Self {
+        SessionsConfig {
+            new_claude: "claude --dangerously-skip-permissions".to_string(),
+            new_codex: "codex --dangerously-bypass-approvals-and-sandbox".to_string(),
+            new_opencode: "opencode --model minimax/MiniMax-M2.5".to_string(),
+            resume_claude: "claude --resume {id}".to_string(),
+            resume_codex: "codex resume {id}".to_string(),
+            resume_opencode: "opencode --session {id}".to_string(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct NotifyConfig {
+    /// Shell command run (detached) when a session starts needing the user. Empty
+    /// disables sound. Default uses the XDG sound theme (no fragile file path).
+    pub sound_command: String,
+}
+
+impl Default for NotifyConfig {
+    fn default() -> Self {
+        NotifyConfig { sound_command: "canberra-gtk-play -i complete".to_string() }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UiConfig {
+    /// Overall scale for the panel's text and default window size. 1.0 = original;
+    /// raise for bigger, more readable UI (clamped to a sane range at use sites).
+    pub scale: f32,
+}
+
+impl Default for UiConfig {
+    fn default() -> Self {
+        UiConfig { scale: 1.15 }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -46,6 +105,10 @@ pub struct QuotaConfig {
     /// Optional manual fallback limits (tokens) if the live API is unavailable.
     pub claude_daily_token_limit: Option<u64>,
     pub claude_weekly_token_limit: Option<u64>,
+    /// How often to refetch the z.ai / GLM usage endpoint.
+    pub zai_poll_secs: u64,
+    /// z.ai API base URL ("https://api.z.ai" global, "https://open.bigmodel.cn" CN).
+    pub zai_base_url: String,
 }
 
 impl Default for QuotaConfig {
@@ -54,6 +117,8 @@ impl Default for QuotaConfig {
             claude_poll_secs: 300,
             claude_daily_token_limit: None,
             claude_weekly_token_limit: None,
+            zai_poll_secs: 300,
+            zai_base_url: "https://api.z.ai".to_string(),
         }
     }
 }
@@ -87,11 +152,15 @@ impl Default for PetConfig {
 pub struct ProvidersConfig {
     pub claude: bool,
     pub codex: bool,
+    /// z.ai / GLM Coding Plan live quota (uses the opencode-stored API key).
+    pub zai: bool,
+    /// opencode local token totals (read from its SQLite store).
+    pub opencode: bool,
 }
 
 impl Default for ProvidersConfig {
     fn default() -> Self {
-        ProvidersConfig { claude: true, codex: true }
+        ProvidersConfig { claude: true, codex: true, zai: true, opencode: true }
     }
 }
 
@@ -102,6 +171,9 @@ impl Default for Config {
             quota: QuotaConfig::default(),
             pet: PetConfig::default(),
             providers: ProvidersConfig::default(),
+            ui: UiConfig::default(),
+            sessions: SessionsConfig::default(),
+            notify: NotifyConfig::default(),
         }
     }
 }

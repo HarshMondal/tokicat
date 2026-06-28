@@ -2,6 +2,7 @@
 
 mod app;
 mod art;
+mod logos;
 mod monitors;
 mod panel;
 mod pet;

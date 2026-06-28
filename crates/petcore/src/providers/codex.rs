@@ -198,6 +198,8 @@ pub fn parse_session(path: &Path) -> Option<Session> {
             full_text: t.full_text.clone(),
             out_tokens: t.out_tokens,
             elapsed,
+            ts: t.prompt_dt,
+            model: None,
             running: newest && !t.completed && t.out_tokens == 0,
             completed: t.completed,
         });
@@ -253,6 +255,7 @@ pub fn parse_session(path: &Path) -> Option<Session> {
         working: false,
         waiting: false,
         total_prompts: prompts.len(),
+        completed_turns: prompts.iter().filter(|p| p.completed).count(),
         total_tokens,
         tokens: tok,
         cost: 0.0, // Codex isn't priced in the Claude PRICING table

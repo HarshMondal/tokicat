@@ -25,7 +25,8 @@ pub fn find_art(max: u32) -> Vec<Frame> {
     frames.unwrap_or_default()
 }
 
-fn locate() -> Option<PathBuf> {
+/// Candidate `assets/` directories, searching dev and installed layouts.
+pub fn asset_roots() -> Vec<PathBuf> {
     let mut roots: Vec<PathBuf> = Vec::new();
     if let Ok(env) = std::env::var("CC_PET_ASSETS") {
         roots.push(PathBuf::from(env));
@@ -40,8 +41,11 @@ fn locate() -> Option<PathBuf> {
     // compile-time repo location (dev convenience)
     roots.push(PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../../assets")));
     roots.push(PathBuf::from("assets"));
+    roots
+}
 
-    for root in roots {
+fn locate() -> Option<PathBuf> {
+    for root in asset_roots() {
         for name in ["pet.gif", "pet.png", "pet.jpg", "pet.jpeg", "pet.webp"] {
             let p = root.join(name);
             if p.is_file() {

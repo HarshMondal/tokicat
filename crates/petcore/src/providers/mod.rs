@@ -5,20 +5,42 @@
 
 pub mod claude;
 pub mod codex;
+pub mod opencode;
 
 use std::path::PathBuf;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Provider {
     Claude,
     Codex,
+    /// z.ai / GLM Coding Plan — live quota, shown as an opencode sub-provider.
+    Zai,
+    /// MiniMax — opencode sub-provider (local token totals; no public quota API).
+    Minimax,
+    /// opencode — umbrella client; its card nests the GLM/MiniMax sub-providers.
+    Opencode,
 }
 
 impl Provider {
+    /// Short lowercase key (asset filenames, config, logs).
     pub fn label(&self) -> &'static str {
         match self {
             Provider::Claude => "claude",
             Provider::Codex => "codex",
+            Provider::Zai => "glm",
+            Provider::Minimax => "minimax",
+            Provider::Opencode => "opencode",
+        }
+    }
+
+    /// Human-facing name shown in the usage UI.
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Provider::Claude => "Claude",
+            Provider::Codex => "Codex",
+            Provider::Zai => "GLM Coding Plan",
+            Provider::Minimax => "MiniMax",
+            Provider::Opencode => "opencode",
         }
     }
 }
@@ -41,6 +63,10 @@ pub struct Prompt {
     pub full_text: String,
     pub out_tokens: u64,
     pub elapsed: Option<f64>, // seconds
+    pub ts: Option<f64>,      // unix seconds, when the prompt was sent
+    /// Raw model id that handled this turn (None → fall back to the session model).
+    /// Lets the history view show which model answered each prompt.
+    pub model: Option<String>,
     pub running: bool,
     pub completed: bool,
 }
@@ -65,6 +91,9 @@ pub struct Session {
     pub working: bool,
     pub waiting: bool,
     pub total_prompts: usize,
+    /// Number of fully-finished turns (assistant responses that completed). Drives
+    /// the cross-provider attention trigger: when it increases, a turn just finished.
+    pub completed_turns: usize,
     pub total_tokens: u64, // sum of per-prompt out_tokens
     pub tokens: TokenBreakdown,
     pub cost: f64,

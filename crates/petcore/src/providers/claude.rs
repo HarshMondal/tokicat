@@ -178,6 +178,7 @@ struct Turn {
     out_tokens: u64,
     last_dt: Option<f64>,
     ids: HashSet<String>,
+    model: Option<String>,
     completed: bool,
 }
 
@@ -253,6 +254,7 @@ pub fn parse_session(path: &Path) -> Option<Session> {
                 out_tokens: 0,
                 last_dt: None,
                 ids: HashSet::new(),
+                model: None,
                 completed: false,
             });
             continue;
@@ -273,6 +275,7 @@ pub fn parse_session(path: &Path) -> Option<Session> {
             }
             if let Some(m) = msg.get("model").and_then(Value::as_str) {
                 model = Some(m.to_string());
+                current.model = Some(m.to_string());
             }
             let usage = msg.get("usage");
             let mid = msg.get("id").and_then(Value::as_str);
@@ -332,6 +335,8 @@ pub fn parse_session(path: &Path) -> Option<Session> {
             full_text: t.full_text.clone(),
             out_tokens: t.out_tokens,
             elapsed,
+            ts: t.prompt_dt,
+            model: t.model.clone(),
             running: newest && !has_resp,
             completed: t.completed,
         });
@@ -402,6 +407,7 @@ pub fn parse_session(path: &Path) -> Option<Session> {
         working: false,
         waiting: false,
         total_prompts: prompts.len(),
+        completed_turns: prompts.iter().filter(|p| p.completed).count(),
         total_tokens,
         tokens: tok,
         cost,

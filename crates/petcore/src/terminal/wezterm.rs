@@ -74,6 +74,35 @@ impl Terminal for WezTerm {
             .unwrap_or(false)
     }
 
+    fn focused_pane(&self) -> Option<String> {
+        // `wezterm cli list-clients` reports the pane each client is focused on.
+        let out = Command::new("wezterm")
+            .args(["cli", "list-clients", "--format", "json"])
+            .output()
+            .ok()?;
+        if !out.status.success() {
+            return None;
+        }
+        let data: Value = serde_json::from_slice(&out.stdout).ok()?;
+        // Take the focused pane from the most-recently-active client (smallest idle).
+        let arr = data.as_array()?;
+        let mut best: Option<(u64, String)> = None;
+        for c in arr {
+            let Some(pid) = c.get("focused_pane_id").and_then(Value::as_i64) else {
+                continue;
+            };
+            let idle = c
+                .get("idle_time")
+                .and_then(|t| t.get("secs"))
+                .and_then(Value::as_u64)
+                .unwrap_or(u64::MAX);
+            if best.as_ref().map(|(b, _)| idle < *b).unwrap_or(true) {
+                best = Some((idle, pid.to_string()));
+            }
+        }
+        best.map(|(_, pid)| pid)
+    }
+
     fn spawn(&self, cwd: &Path, inner: &str) -> bool {
         let cwd = cwd.to_string_lossy().to_string();
         // new tab in the running WezTerm

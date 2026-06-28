@@ -24,6 +24,7 @@ impl App {
         let t = ctx.input(|i| i.time);
         let rect = ui.max_rect();
         let resp = ui.interact(rect, ui.id().with("petbody"), Sense::click_and_drag());
+        self.pet_hovered = resp.hovered();
         self.handle_input(&ctx, &resp);
 
         let bob = 3.0 * (t * 2.5).sin() as f32 - self.bounce * (t * 15.0).sin().abs() as f32;
@@ -65,15 +66,28 @@ impl App {
             PetState::Normal => {
                 if resp.drag_started() {
                     self.cancel_animation();
+                    self.dragging = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
                 }
                 if resp.drag_stopped() {
+                    self.dragging = false;
+                    // The WM owned the position during the drag; read the final rect back
+                    // before saving so we persist where the window actually landed.
+                    if let Some(rect) = ctx.input(|i| i.viewport().outer_rect) {
+                        self.pos = rect.min;
+                    }
                     self.state.pet_x = Some(self.pos.x.round() as i32);
                     self.state.pet_y = Some(self.pos.y.round() as i32);
                     self.state.save();
                 }
                 if resp.clicked() {
-                    self.toggle_panel(ctx);
+                    // If a session is waiting on us, the click goes to that work
+                    // (focus its terminal / open the waiting list); else toggle panel.
+                    if self.attention.is_empty() {
+                        self.toggle_panel(ctx);
+                    } else {
+                        self.attention_click(ctx);
+                    }
                 }
             }
         }

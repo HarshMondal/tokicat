@@ -27,7 +27,12 @@ impl MonRect {
 /// All monitors. Tries xrandr first; falls back to a single rect at the origin
 /// sized from egui's reported monitor size.
 pub fn all(ctx: &egui::Context) -> Vec<MonRect> {
-    let xr = from_xrandr();
+    // xrandr reports physical device pixels, but egui viewport commands
+    // (OuterPosition/InnerSize) and outer_rect are in logical points. On a HiDPI
+    // display these differ by pixels_per_point, so scale xrandr down to points —
+    // otherwise the pet is placed/teleported/centered at ~scale× the intended spot.
+    let ppp = ctx.pixels_per_point().max(0.01);
+    let xr = from_xrandr(ppp);
     if !xr.is_empty() {
         return xr;
     }
@@ -36,7 +41,9 @@ pub fn all(ctx: &egui::Context) -> Vec<MonRect> {
 }
 
 /// Parse `xrandr --query` lines like `DP-1 connected 2560x1440+1920+0 ...`.
-fn from_xrandr() -> Vec<MonRect> {
+/// `ppp` is pixels-per-point; the parsed physical geometry is scaled to logical
+/// points so it matches egui's coordinate space.
+fn from_xrandr(ppp: f32) -> Vec<MonRect> {
     let out = match Command::new("xrandr").arg("--query").output() {
         Ok(o) if o.status.success() => o,
         _ => return Vec::new(),
@@ -48,7 +55,11 @@ fn from_xrandr() -> Vec<MonRect> {
             continue;
         }
         for tok in line.split_whitespace() {
-            if let Some(r) = parse_geom(tok) {
+            if let Some(mut r) = parse_geom(tok) {
+                r.x /= ppp;
+                r.y /= ppp;
+                r.w /= ppp;
+                r.h /= ppp;
                 rects.push(r);
                 break;
             }
