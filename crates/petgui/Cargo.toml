@@ -7,7 +7,7 @@ authors.workspace = true
 description = "egui/eframe desktop pet GUI for petcore."
 
 [[bin]]
-name = "cc-pet"
+name = "tokicat"
 path = "src/main.rs"
 
 [dependencies]

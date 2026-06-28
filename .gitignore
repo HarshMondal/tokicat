@@ -1,10 +1,12 @@
-__pycache__/
-*.pyc
-# user art is yours to commit or not; runtime state lives in ~/.config/claude-pet
-
-# odin tooling runtime artifacts
-.odin/logs/
-.odin/costs/
-
 # rust build artifacts
 /target
+
+# python (legacy reference implementation) artifacts
+__pycache__/
+*.pyc
+
+# personal / local dev config (not part of the project)
+opencode.json
+.odin/
+
+# runtime state & caches live in ~/.config/tokicat/ (outside the repo)
